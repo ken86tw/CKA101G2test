@@ -134,4 +134,13 @@ public class OrderService {
             this.qty = qty;
         }
     }
+    @Transactional
+    public void confirmOrder(String merChantTradeNo, Integer paidAmount,
+                             Byte paymentMethod, String ecpayTradeNo){
+    int row = orderRepository.completeOrderPayment(paidAmount,
+            paymentMethod, merChantTradeNo, ecpayTradeNo);
+        if(row == 0){
+            throw new IllegalStateException("訂單不存在或是已處理" + merChantTradeNo);
+        }
+    }
 }
