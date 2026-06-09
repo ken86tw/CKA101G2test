@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest   // 載入整個 Spring 環境，@Autowired 才有東西可注入、也連到真的 DB
+@SpringBootTest
 @Transactional    // 關鍵：測完自動 rollback，DB 不留資料
 public class RoomInventoryRepositoryTest {
 

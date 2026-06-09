@@ -13,8 +13,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest          // 啟動整個 Spring 環境,連真的 thestar 資料庫
-@Transactional           // 每個測試跑完自動回滾,不留髒資料
+@SpringBootTest
+@Transactional           // 每個測試跑完自動回滾
 public class OrderServiceTest {
 
     @Autowired

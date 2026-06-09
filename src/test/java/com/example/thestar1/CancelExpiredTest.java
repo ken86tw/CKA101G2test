@@ -28,7 +28,7 @@ public class CancelExpiredTest {
     private EntityManager entityManager;   // 改時間 + 清快取要用
 
     @Test
-    void 逾時訂單_應該被取消() {
+    void canceled() {
         // 1. 建一筆 PENDING 訂單
         CreateRoomOrderDTO dto = new CreateRoomOrderDTO();
         dto.setCheckInDate(LocalDate.of(2026, 8, 1));
@@ -48,8 +48,8 @@ public class CancelExpiredTest {
                 .setParameter(2, orderId)
                 .executeUpdate();
 
-        // 後半段下一步再給
-        // 3. 清快取（剛剛用 native SQL 改了時間，JPA 快取裡是舊的）
+
+        // 3. 清快取（ native SQL 改了時間，JPA 快取裡是舊的）
         entityManager.clear();
 
         // 4. 執行逾時取消
