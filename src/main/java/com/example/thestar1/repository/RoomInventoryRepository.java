@@ -44,4 +44,10 @@ public interface RoomInventoryRepository extends JpaRepository<RoomInventoryVO, 
     int releaseRoom(@Param("date") LocalDate date,
                     @Param("roomTypeId") Integer roomTypeId,
                     @Param("qty") int qty);
+
+
+    @Query(value = "SELECT TOTAL_AMOUNT-BOOKED_AMOUNT FROM ROOM_INVENTORY " +
+            "WHERE INVENTORY_DATE = :date AND ROOM_TYPE_ID = :roomTypeId", nativeQuery = true)
+    int checkRedisRoom(@Param("roomTypeId") Integer roomTypeId,
+                   @Param("date") LocalDate date);
 }

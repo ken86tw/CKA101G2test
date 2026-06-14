@@ -10,6 +10,8 @@ import com.example.thestar1.repository.RefundListRepository;
 import com.example.thestar1.repository.RoomInventoryRepository;
 import com.example.thestar1.repository.RoomTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,14 +29,16 @@ public class OrderService {
     private final RoomInventoryRepository roomInventoryRepository;
     private final RoomTypeRepository roomTypeRepository;
     private final RefundListRepository refundListRepository;
+    private final StringRedisTemplate redisTemplate;
 
     @Autowired
     public OrderService(OrderRepository orderRepository, RoomInventoryRepository roomInventoryRepository
-            , RoomTypeRepository roomTypeRepository, RefundListRepository refundListRepository) {
+            , RoomTypeRepository roomTypeRepository, RefundListRepository refundListRepository, StringRedisTemplate redisTemplate) {
         this.orderRepository = orderRepository;
         this.roomInventoryRepository = roomInventoryRepository;
         this.roomTypeRepository = roomTypeRepository;
         this.refundListRepository = refundListRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
@@ -214,9 +218,31 @@ public class OrderService {
         }
         RefundListVO refund = new RefundListVO();
         refund.setAmount(vo.getPaidAmount());
-        refund.setRefundStatus((byte)0);
+        refund.setRefundStatus((byte) 0);
         refund.setReason(reason);
         refund.setOrdervo(vo);
         refundListRepository.save(refund);
+    }
+
+    private String roomKey(Integer roomTypeId, LocalDate date) {
+        return "room:" + roomTypeId + ":" + date;
+    }
+
+    public void initRedisRoom(Integer roomTypeId, LocalDate date) {
+        int room = roomInventoryRepository.checkRedisRoom(roomTypeId, date);
+        String key = roomKey(roomTypeId, date);
+
+        redisTemplate.opsForValue().setIfAbsent(key, String.valueOf(room));
+    }
+
+   public boolean tryRedisBookRoom(Integer roomTypeId,LocalDate date, int qty) {
+        String key = roomKey(roomTypeId,date);
+        long result = redisTemplate.opsForValue().decrement(key,qty);
+
+        if(result < 0){
+          redisTemplate.opsForValue().increment(key,qty);
+          return false;
+        }
+        return true;
     }
 }
