@@ -1,6 +1,8 @@
 package com.example.thestar1.repository;
 
 import com.example.thestar1.entity.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -36,4 +38,11 @@ public interface OrderRepository extends JpaRepository<OrderVO, Integer> {
     @Modifying
     @Query(value = "UPDATE ROOM_ORDER SET ORDER_STATUS = 3 WHERE ORDER_ID = :orderId AND ORDER_STATUS = 1", nativeQuery = true)
     int customerCancelOrder(@Param("orderId") Integer orderId);
+
+    //查詢並利用訂單狀態區分會員的訂單
+    Page<OrderVO> findByMemberIdAndOrderStatus(Integer MemberId, Byte OrderStatus, Pageable pageable);
+
+    //確認查詢的訂單與會員皆為同一人
+    boolean existsByMemberIdAndOrderId(Integer memberId, Integer orderId);
+
 }

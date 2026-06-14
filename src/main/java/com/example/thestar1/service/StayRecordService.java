@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class StayRecordService {
@@ -106,4 +108,12 @@ public class StayRecordService {
         return stay;
     }
 
+
+    public List<StayRecordVO> findStayRecord(Integer roomId, String stayCustomer, LocalDate checkInTime, LocalDate checkOutTime) {
+        //如果是空值就放空值進去不是就將他改為當天開始跟結束的午夜
+        LocalDateTime start = (checkInTime == null) ? null : checkInTime.atStartOfDay();
+        LocalDateTime end = (checkOutTime == null) ? null : checkOutTime.plusDays(1).atStartOfDay();
+        return stayRecordRepository.FrontSearchStayRecordVO(roomId, stayCustomer, start, end);
+
+    }
 }

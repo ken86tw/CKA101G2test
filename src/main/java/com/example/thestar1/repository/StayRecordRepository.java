@@ -3,6 +3,12 @@ package com.example.thestar1.repository;
 import com.example.thestar1.entity.OrderListVO;
 import com.example.thestar1.entity.StayRecordVO;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public interface StayRecordRepository extends JpaRepository<StayRecordVO, Integer> {
 
@@ -21,4 +27,14 @@ public interface StayRecordRepository extends JpaRepository<StayRecordVO, Intege
     int countByOrderListvoOrdervoOrderIdAndCheckOutTimeIsNull(Integer orderId);
 
 
+    //複合查詢住宿紀錄
+    @Query("SELECT s FROM StayRecordVO s WHERE (:roomId IS NULL OR  s.roomId = :roomId ) AND (:stayCustomer IS NULL OR s.stayCustomer LIKE CONCAT('%',:stayCustomer,'%') ) " +
+            "AND (:checkInTime is null OR s.checkInTime >= :checkInTime) AND (s.checkOutTime is null OR :checkOutTime is null OR s.checkOutTime < :checkOutTime) ORDER BY s.checkInTime DESC")
+    List<StayRecordVO> FrontSearchStayRecordVO(@Param("roomId") Integer roomId,             //確保未退房也查得到
+                                               @Param("stayCustomer")String stayCustomer,
+                                               @Param("checkInTime") LocalDateTime checkInTime,
+                                               @Param("checkOutTime")LocalDateTime checkOutTime);
+
 }
+
+
