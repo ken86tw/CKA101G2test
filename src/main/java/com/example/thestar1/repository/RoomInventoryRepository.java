@@ -48,6 +48,6 @@ public interface RoomInventoryRepository extends JpaRepository<RoomInventoryVO, 
 
     @Query(value = "SELECT TOTAL_AMOUNT-BOOKED_AMOUNT FROM ROOM_INVENTORY " +
             "WHERE INVENTORY_DATE = :date AND ROOM_TYPE_ID = :roomTypeId", nativeQuery = true)
-    int checkInventory(@Param("roomTypeId") Integer roomTypeId,
-                   @Param("date") LocalDate date);
+    Integer checkInventory(@Param("roomTypeId") Integer roomTypeId,
+                           @Param("date") LocalDate date);
 }

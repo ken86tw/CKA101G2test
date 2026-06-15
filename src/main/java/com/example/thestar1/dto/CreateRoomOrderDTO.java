@@ -10,8 +10,9 @@ public class CreateRoomOrderDTO {
     private LocalDate checkOutDate;
     private List<RoomItem> rooms;
 
-    public static class RoomItem{
+    public static class RoomItem {
         private Integer roomTypeId;
+        private int qty;
 
         public Integer getRoomTypeId() {
             return roomTypeId;
@@ -29,7 +30,7 @@ public class CreateRoomOrderDTO {
             this.qty = qty;
         }
 
-        private  int qty;
+
     }
 
     public Integer getCouponId() {

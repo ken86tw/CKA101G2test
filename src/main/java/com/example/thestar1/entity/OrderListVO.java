@@ -2,6 +2,7 @@ package com.example.thestar1.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -34,10 +35,12 @@ public class OrderListVO {
 	@Column(name = "SUBTOTAL")
 	private Integer subtotal;
 
+	@JsonIgnore
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ORDER_ID")
 	private OrderVO ordervo;
-	
+
+
 	@OneToMany(mappedBy = "orderListvo", fetch = FetchType.LAZY)
 	private List<StayRecordVO> stayRecord;
 

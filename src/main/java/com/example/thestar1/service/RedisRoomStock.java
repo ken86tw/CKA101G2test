@@ -2,6 +2,7 @@ package com.example.thestar1.service;
 
 
 import com.example.thestar1.repository.RoomInventoryRepository;
+import com.example.thestar1.repository.RoomTypeRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,10 +13,12 @@ public class RedisRoomStock {
 
     private final StringRedisTemplate redisTemplate;
     private final RoomInventoryRepository roomInventoryRepository;
+    private final RoomTypeRepository roomTypeRepository;
 
-    public RedisRoomStock(StringRedisTemplate redisTemplate, RoomInventoryRepository roomInventoryRepository) {
+    public RedisRoomStock(StringRedisTemplate redisTemplate, RoomInventoryRepository roomInventoryRepository, RoomTypeRepository roomTypeRepository) {
         this.redisTemplate = redisTemplate;
         this.roomInventoryRepository = roomInventoryRepository;
+        this.roomTypeRepository = roomTypeRepository;
     }
 
     private String roomKey(Integer roomTypeId, LocalDate date) {
@@ -24,8 +27,14 @@ public class RedisRoomStock {
 
     public void initRedisRoom(Integer roomTypeId, LocalDate date) {
         String key = roomKey(roomTypeId, date);
-        int room = roomInventoryRepository.checkInventory(roomTypeId, date);
+        Integer available = roomInventoryRepository.checkInventory(roomTypeId, date);
+        int room;
 
+        if (available == null) {
+            room = roomTypeRepository.findById(roomTypeId).orElseThrow().getRoomTypeAmount();
+        } else {
+            room = available;
+        }
         redisTemplate.opsForValue().setIfAbsent(key, String.valueOf(room));
     }
 
