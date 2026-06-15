@@ -67,6 +67,9 @@ public class OrderService {
 
             Integer roomTypeId = item.getRoomTypeId();
             int qty = item.getQty();
+            if (qty < 0) {
+                throw new IllegalArgumentException("錯誤數量，房型數量必須大於零");
+            }
 
             RoomTypeVO roomType = roomTypeRepository.findById(roomTypeId)
                     .orElseThrow(() -> new IllegalArgumentException("房型錯誤"));
@@ -98,13 +101,38 @@ public class OrderService {
         dailyBookings.sort(Comparator.comparing((DailyBooking d) -> d.roomTypeId)
                 .thenComparing((DailyBooking d) -> d.date));
 
+        //建立操作了redis的明細list
+        List<DailyBooking> redisBooked = new ArrayList<>();
+
         //使用dailyBookings將存好的每日訂房資料一筆一筆扣進庫存 回傳0交易失敗回滾
-        for (DailyBooking d : dailyBookings) {
-            roomInventoryRepository.initInventory(d.date, d.roomTypeId);
-            int row = roomInventoryRepository.bookRooms(d.date, d.roomTypeId, d.qty);
-            if (row == 0) {
-                throw new IllegalStateException("房型" + d.roomTypeId + "於" + d.date + "庫存不足，無法完成訂房");
+        try {
+            for (DailyBooking d : dailyBookings) {
+
+                initRedisRoom(d.roomTypeId, d.date);
+
+                if (!tryRedisBookRoom(d.roomTypeId, d.date, d.qty)) {
+                    throw new IllegalArgumentException("房型" + d.roomTypeId +
+                            "於" + d.date + "庫存不足，無法完成訂房");
+                }
+
+                //把以扣庫存的明細加入list裡面，以防回滾
+                redisBooked.add(d);
+
+                roomInventoryRepository.initInventory(d.date, d.roomTypeId);
+                int row = roomInventoryRepository.bookRooms(d.date, d.roomTypeId, d.qty);
+                if (row == 0) {
+                    throw new IllegalStateException("房型" + d.roomTypeId +
+                            "於" + d.date + "庫存不足，無法完成訂房");
+                }
             }
+
+        } catch (RuntimeException e) {
+            //只回滾操作過redis的明細
+            for (DailyBooking d : redisBooked) {
+                redisTemplate.opsForValue()
+                        .increment(roomKey(d.roomTypeId, d.date), d.qty);
+            }
+            throw e;
         }
         //訂房資料存進去後建立訂單
         OrderVO ordervo = new OrderVO();
@@ -224,6 +252,7 @@ public class OrderService {
         refundListRepository.save(refund);
     }
 
+
     private String roomKey(Integer roomTypeId, LocalDate date) {
         return "room:" + roomTypeId + ":" + date;
     }
@@ -235,13 +264,13 @@ public class OrderService {
         redisTemplate.opsForValue().setIfAbsent(key, String.valueOf(room));
     }
 
-   public boolean tryRedisBookRoom(Integer roomTypeId,LocalDate date, int qty) {
-        String key = roomKey(roomTypeId,date);
-        long result = redisTemplate.opsForValue().decrement(key,qty);
+    public boolean tryRedisBookRoom(Integer roomTypeId, LocalDate date, int qty) {
+        String key = roomKey(roomTypeId, date);
+        long result = redisTemplate.opsForValue().decrement(key, qty);
 
-        if(result < 0){
-          redisTemplate.opsForValue().increment(key,qty);
-          return false;
+        if (result < 0) {
+            redisTemplate.opsForValue().increment(key, qty);
+            return false;
         }
         return true;
     }

@@ -16,7 +16,7 @@ public interface OrderRepository extends JpaRepository<OrderVO, Integer> {
     //自訂sql第一為了防併發 第二需要條件過濾
     @Modifying
     @Query(value = "UPDATE ROOM_ORDER SET ORDER_STATUS = 1 , PAID_AMOUNT = :paidAmount, PAYMENT_METHOD = :paymentMethod," +
-            "ECPAY_TRADE_NO = :ecpayTradeNo WHERE MERCHANT_TRADE_NO = :merchantTradeNo AND ORDER_STATUS = 0", nativeQuery = true)
+            "ECPAY_TRADE_NO = :ecpayTradeNo WHERE MERCHANT_TRADE_NO = :merchantTradeNo AND ORDER_STATUS = 0 AND :paidAmount = TOTAL_AMOUNT - DISCOUNT_AMOUNT", nativeQuery = true)
     int confirmOrderPayment(@Param("paidAmount") Integer paidAmount,
                             @Param("paymentMethod") Byte paymentMethod,
                             @Param("merchantTradeNo") String merchantTradeNo,
@@ -36,7 +36,7 @@ public interface OrderRepository extends JpaRepository<OrderVO, Integer> {
 
 
     @Modifying
-    @Query(value = "UPDATE ROOM_ORDER SET ORDER_STATUS = 3 WHERE ORDER_ID = :orderId AND ORDER_STATUS = 1", nativeQuery = true)
+    @Query(value = "UPDATE ROOM_ORDER  SET ORDER_STATUS = 3 WHERE ORDER_ID = :orderId AND ORDER_STATUS = 1  ", nativeQuery = true)
     int customerCancelOrder(@Param("orderId") Integer orderId);
 
     //查詢並利用訂單狀態區分會員的訂單
