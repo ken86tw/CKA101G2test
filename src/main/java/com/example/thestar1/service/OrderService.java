@@ -63,6 +63,7 @@ public class OrderService {
         List<OrderListVO> orderList = new ArrayList<>();
 
         //算出 單個房型的住房期間費用 加到暫存明細中.
+        //在最後建立訂單時在將全部的暫存明細放進訂單vo的維持關聯
         for (CreateRoomOrderDTO.RoomItem item : dto.getRooms()) {
 
             Integer roomTypeId = item.getRoomTypeId();
@@ -87,7 +88,7 @@ public class OrderService {
 
         }
 
-        //建立一個這個訂單所有房型的每日住房清單 因為庫存資料庫是用房型跟天數作為雙主鍵
+        //使用內部類別建立一個這個訂單所有房型的每日住房清單 因為庫存資料庫是用房型跟天數作為雙主鍵
         //需要使用雙層迴圈將天數拆解成一天一天以加入庫存
         //接下來將日期,房型與數量加入內部類別建出的物件後塞進list集合裡用來訂房
         List<DailyBooking> dailyBookings = new ArrayList<>();
@@ -101,10 +102,10 @@ public class OrderService {
         dailyBookings.sort(Comparator.comparing((DailyBooking d) -> d.roomTypeId)
                 .thenComparing((DailyBooking d) -> d.date));
 
-        //建立一個redis操作過明細的集合
+        //建立一個redis操作過訂單的集合
         List<DailyBooking> redisBooked = new ArrayList<>();
 
-        //先讓redis操作庫存
+        //先讓redis操作庫存 如果失敗丟例外後catch回滾
         for (DailyBooking d : dailyBookings) {
 
             redisRoomStock.initRedisRoom(d.roomTypeId, d.date);

@@ -116,4 +116,10 @@ public class StayRecordService {
         return stayRecordRepository.FrontSearchStayRecordVO(roomId, stayCustomer, start, end);
 
     }
+
+
+    public List<RoomVO> findAvailableRoom(Integer roomTypeId){
+        return roomRepository.findByRoomTypeIdAndRoomStatusAndRoomSwitchStatus(roomTypeId,(byte)0,true);
+
+    }
 }

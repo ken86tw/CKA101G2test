@@ -16,4 +16,11 @@ public class DevLoginController {
         session.setAttribute("loginMember", member);
         return "fake login ok, memberId=" + memberId + ", sessionId=" + session.getId();
     }
+
+    @GetMapping("/dev/employeelogin/{employeeId}")
+    public  String fakeEmployeeLogin(@PathVariable Integer employeeId, HttpSession session){
+        session.setAttribute("loginemployee", employeeId);
+        return"fake employee login OK employeeId = " + employeeId;
+    }
+
 }
