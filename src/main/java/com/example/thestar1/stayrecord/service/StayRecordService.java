@@ -123,4 +123,9 @@ public class StayRecordService {
         return roomRepository.findByRoomTypeIdAndRoomStatusAndRoomSwitchStatus(roomTypeId,(byte)0,true);
 
     }
+
+    public List<StayRecordVO> findAllCheckOutRoom(){
+
+        return stayRecordRepository.findByCheckOutTimeIsNullOrderByOrderListvoOrdervoOrderIdDesc();
+    }
 }

@@ -35,6 +35,8 @@ public interface StayRecordRepository extends JpaRepository<StayRecordVO, Intege
                                                @Param("checkInTime") LocalDateTime checkInTime,
                                                @Param("checkOutTime")LocalDateTime checkOutTime);
 
+
+    List<StayRecordVO> findByCheckOutTimeIsNullOrderByOrderListvoOrdervoOrderIdDesc();
 }
 
 
