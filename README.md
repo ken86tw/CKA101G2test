@@ -1,0 +1,28 @@
+changelog : 
+thestar_7.sql 更動部分
+主要差異
+
+新增資料表（只有 7.sql 有）
+
+PERMISSION
+ROLE
+ROLE_PERMISSION
+EMPLOYEE_ROLE
+DROP TABLE 區塊差異
+
+7.sql 在員工相關區塊多了：
+DROP TABLE IF EXISTS EMPLOYEE_ROLE;
+DROP TABLE IF EXISTS ROLE_PERMISSION;
+DROP TABLE IF EXISTS PERMISSION;
+DROP TABLE IF EXISTS ROLE;
+6.sql 沒有這些表的 drop。
+員工/角色權限資料初始化（只有 7.sql 有）
+
+新增 PERMISSION 權限資料（如 EMPLOYEE_MANAGE, ORDER_VIEW, RESTAURANT_MANAGE 等）
+新增 ROLE 角色資料（如 ROLE_SUPER_ADMIN, ROLE_FRONT_DESK）
+新增 ROLE_PERMISSION 角色對權限對應
+新增 EMPLOYEE_ROLE 員工對角色對應
+EMPLOYEE 假資料差異
+
+7.sql 的 EMPLOYEE_PASSWORD 改成同一組 bcrypt 雜湊字串（$2a$10$...）
+6.sql 使用示意字串（$2a$12$hashedpassword00x）
