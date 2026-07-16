@@ -158,14 +158,20 @@ VALUES
 -- 會員優惠券MEMBER_COUPON
 -- ========================================================================================================
 CREATE TABLE MEMBER_COUPON (
-    MEMBER_COUPON_ID    INT          NOT NULL AUTO_INCREMENT,
-    MEMBER_ID           INT          NOT NULL,
-    COUPON_ID           INT          NOT NULL,
-    ISSUE_PERIOD        VARCHAR(50)  NOT NULL,
-    USED_STATUS         TINYINT      NOT NULL DEFAULT 0 COMMENT '0:NOT_USED 1:USED',
-    CLAIMED_TIME        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    USAGE_START_TIME    DATETIME     NOT NULL,
-    USAGE_END_TIME      DATETIME     NOT NULL,
+    MEMBER_COUPON_ID    INT         NOT NULL AUTO_INCREMENT,
+    MEMBER_ID           INT         NOT NULL,
+    COUPON_ID           INT         NOT NULL,
+    ISSUE_PERIOD        VARCHAR(50) NOT NULL,
+
+    USE_STATUS          TINYINT     NOT NULL DEFAULT 1
+        COMMENT '0:暫停使用 1:允許使用',
+
+    USED_STATUS         TINYINT     NOT NULL DEFAULT 0
+        COMMENT '0:未使用 1:已使用',
+
+    CLAIMED_TIME        DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    USAGE_START_TIME    DATETIME    NOT NULL,
+    USAGE_END_TIME      DATETIME    NOT NULL,
     USED_TIME           DATETIME,
 
     CONSTRAINT MEMBER_COUPON_MEMBER_COUPON_ID_PK
@@ -186,6 +192,9 @@ CREATE TABLE MEMBER_COUPON (
         FOREIGN KEY (COUPON_ID)
         REFERENCES COUPONS (COUPON_ID),
 
+    CONSTRAINT MEMBER_COUPON_USE_STATUS_CK
+        CHECK (USE_STATUS IN (0, 1)),
+
     CONSTRAINT MEMBER_COUPON_USED_STATUS_CK
         CHECK (USED_STATUS IN (0, 1)),
 
@@ -197,22 +206,28 @@ CREATE TABLE MEMBER_COUPON (
 
     CONSTRAINT MEMBER_COUPON_USED_TIME_CK
         CHECK (
-            (USED_STATUS = 0
-                AND USED_TIME IS NULL)
+            (
+                USED_STATUS = 0
+                AND USED_TIME IS NULL
+            )
             OR
-            (USED_STATUS = 1
+            (
+                USED_STATUS = 1
                 AND USED_TIME IS NOT NULL
                 AND USED_TIME >= CLAIMED_TIME
                 AND USED_TIME >= USAGE_START_TIME
-                AND USED_TIME <= USAGE_END_TIME)
+                AND USED_TIME <= USAGE_END_TIME
+            )
         )
 
-) ENGINE = INNODB DEFAULT CHARSET = UTF8MB4 COLLATE = UTF8MB4_UNICODE_CI;
-
+) ENGINE = INNODB
+  DEFAULT CHARSET = UTF8MB4
+  COLLATE = UTF8MB4_UNICODE_CI;
 INSERT INTO MEMBER_COUPON (
     MEMBER_ID,
     COUPON_ID,
     ISSUE_PERIOD,
+    USE_STATUS,
     USED_STATUS,
     CLAIMED_TIME,
     USAGE_START_TIME,
@@ -220,11 +235,12 @@ INSERT INTO MEMBER_COUPON (
     USED_TIME
 )
 VALUES
-(1,1,'ONCE',0,'2026-07-13 10:00:00','2026-07-13 10:00:00','2026-08-11 23:59:59',NULL),
-(1,2,'2026-07',0,'2026-07-01 00:05:00','2026-07-01 00:00:00','2026-07-31 23:59:59',NULL),
-(2,2,'2026-07',0,'2026-07-01 00:05:00','2026-07-01 00:00:00','2026-07-31 23:59:59',NULL),
-(3,2,'2026-06',0,'2026-06-01 00:05:00','2026-06-01 00:00:00','2026-06-30 23:59:59',NULL),
-(3,3,'2026-MOTHERS-DAY',0,'2026-04-25 12:00:00','2026-05-01 00:00:00','2026-05-10 23:59:59',NULL);
+(1,1,'ONCE',1,0,'2026-07-13 10:00:00','2026-07-13 10:00:00','2026-08-11 23:59:59',NULL),
+(1,2,'2026-07',1,0,'2026-07-01 00:05:00','2026-07-01 00:00:00','2026-07-31 23:59:59',NULL),
+(2,2,'2026-07',1,0,'2026-07-01 00:05:00','2026-07-01 00:00:00','2026-07-31 23:59:59',NULL),
+(3,2,'2026-06',1,0,'2026-06-01 00:05:00','2026-06-01 00:00:00','2026-06-30 23:59:59',NULL),
+(3,3,'2026-MOTHERS-DAY',1,0,'2026-04-25 12:00:00','2026-05-01 00:00:00','2026-05-10 23:59:59',NULL);
+
 -- ========================================================================================================
 -- 會員通知MEMBER_NOTIFY
 -- ========================================================================================================
@@ -640,6 +656,8 @@ INSERT INTO REVIEW (ARTICLE_ID, CONTENT, LIKE_COUNT, MEMBER_ID) VALUES
 -- ========================================================================================================
 -- 房間&房型121212
 -- ========================================================================================================
+
+
 CREATE TABLE ROOM_TYPE ( 
 ROOM_TYPE_ID INT NOT NULL AUTO_INCREMENT COMMENT '房型編號',
 ROOM_TYPE_NAME VARCHAR(50) NOT NULL COMMENT '房型名稱',
@@ -661,6 +679,7 @@ CONSTRAINT ROOM_ROOM_TYPE_ID_FK FOREIGN KEY (ROOM_TYPE_ID)
 REFERENCES ROOM_TYPE (ROOM_TYPE_ID)
 ) ENGINE = INNODB DEFAULT CHARSET = UTF8MB4 COLLATE = UTF8MB4_UNICODE_CI COMMENT = '房間';
 
+-- 房型圖片
 CREATE TABLE ROOM_TYPE_PHOTO ( 
 ROOM_TYPE_PHOTO_ID INT NOT NULL AUTO_INCREMENT COMMENT '房型圖片編號',
 ROOM_TYPE_ID INT NOT NULL COMMENT '房型編號',
@@ -669,6 +688,7 @@ CONSTRAINT ROOM_TYPE_PHOTO_ROOM_TYPE_PHOTO_ID_PK PRIMARY KEY (ROOM_TYPE_PHOTO_ID
 CONSTRAINT ROOM_TYPE_PHOTO_ROOM_TYPE_ID_FK FOREIGN KEY (ROOM_TYPE_ID)
 REFERENCES ROOM_TYPE(ROOM_TYPE_ID)
 ) ENGINE = INNODB DEFAULT CHARSET = UTF8MB4 COLLATE = UTF8MB4_UNICODE_CI COMMENT = '房型圖片';
+
 -- 罐頭訊息
 CREATE TABLE CANNED_MESSAGE ( 
 CANNED_MESSAGE_ID  INT NOT NULL AUTO_INCREMENT COMMENT '罐頭編號',
@@ -689,9 +709,24 @@ INSERT INTO CANNED_MESSAGE (CANNED_MESSAGE_ID, CANNED_MESSAGE_QUESTION, CANNED_M
 一般消費者請洽附近的公、私有停車場，目前飯店停車場僅供住宿客使用。');
 
 INSERT INTO ROOM_TYPE (ROOM_TYPE_ID, ROOM_TYPE_NAME, ROOM_TYPE_AMOUNT, ROOM_TYPE_CONTENT, ROOM_TYPE_STATUS, ROOM_TYPE_PRICE) VALUES 
-(1, '雙人房', 30, '單人獨享；雙人剛好，適合獨自或有伴侶的旅客，標準且最多人選擇', 1, 4000),
-(2, '四人房', 15, '家人、團體住宿的不二選擇，充分的空間和齊全的設備讓人能放鬆的體驗', 1, 7500),
-(3, '總統套房', 5, '給只想感受最好的你。上限六人，東方之星就在此處。', 1, 12600);
+(1, '雙人房', 30, '單人獨享；雙人剛好，適合獨自或有伴侶的旅客，標準且最多人選擇。
+床型： 標準雙人床
+坪數： 10 坪
+設施： 無線網路、液晶電視、免治馬桶、乾濕分離沐浴間、快煮壺、小型商務辦公桌。', 
+1, 4000),
+
+(2, '四人房', 15, '家人、團體住宿的不二選擇，充分的空間和齊全的設備讓人能放鬆的體驗。
+床型： 兩張標準雙人床
+坪數： 16 坪
+設施： 無線網路、大螢幕液晶電視、獨立浴缸、免治馬桶、雙人盥洗台、膠囊咖啡機、簡易小冰箱、客廳休憩區。',
+ 1, 7500),
+
+(3, '總統套房', 5, '給只想感受最好的你。上限六人，東方之星就在此處。
+床型： 兩張特大雙人床 (King Size) 及 一組頂級高級沙發床
+坪數： 30 坪
+設施：高速無線網路、65吋 4K 影音娛樂系統、獨立大客廳與六人座餐桌、雙衛浴配置 (含大型景觀按摩浴缸)、
+紅酒櫃與膠囊咖啡機、空氣清淨機、更衣室與大型置物櫃、獨立多功能辦公桌。',
+ 1, 12600);
 
 INSERT INTO ROOM_TYPE_PHOTO (ROOM_TYPE_PHOTO_ID, ROOM_TYPE_ID, ROOM_TYPE_PIC) VALUES
 (1, 1, NULL),
@@ -700,13 +735,18 @@ INSERT INTO ROOM_TYPE_PHOTO (ROOM_TYPE_PHOTO_ID, ROOM_TYPE_ID, ROOM_TYPE_PIC) VA
 
 
 INSERT INTO ROOM (ROOM_ID, ROOM_TYPE_ID, ROOM_STATUS, ROOM_SWITCH_STATUS) VALUES
-(101, 1, 0, 1),
-(102, 1, 0, 1),
-(201, 2, 0, 1),
-(202, 2, 0, 1),
-(203, 2, 0, 1),
-(301, 3, 0, 1),
-(302, 3, 0, 1);
+(101, 1, 0, 1), (102, 1, 0, 1), (103, 1, 0, 1), (104, 1, 0, 1), (105, 1, 0, 1),
+(106, 1, 0, 1), (107, 1, 0, 1), (108, 1, 0, 1), (109, 1, 0, 1), (110, 1, 0, 1),
+(111, 1, 0, 1), (112, 1, 0, 1), (113, 1, 0, 1), (114, 1, 0, 1), (115, 1, 0, 1),
+(116, 1, 0, 1), (117, 1, 0, 1), (118, 1, 0, 1), (119, 1, 0, 1), (120, 1, 0, 1),
+(121, 1, 0, 1), (122, 1, 0, 1), (123, 1, 0, 1), (124, 1, 0, 1), (125, 1, 0, 1),
+(126, 1, 0, 1), (127, 1, 0, 1), (128, 1, 0, 1), (129, 1, 0, 1), (130, 1, 0, 1),
+
+(201, 2, 0, 1), (202, 2, 0, 1), (203, 2, 0, 1), (204, 2, 0, 1), (205, 2, 0, 1),
+(206, 2, 0, 1), (207, 2, 0, 1), (208, 2, 0, 1), (209, 2, 0, 1), (210, 2, 0, 1),
+(211, 2, 0, 1), (212, 2, 0, 1), (213, 2, 0, 1), (214, 2, 0, 1), (215, 2, 0, 1),
+
+(301, 3, 0, 1), (302, 3, 0, 1), (303, 3, 0, 1), (304, 3, 0, 1), (305, 3, 0, 1);
 
 
 -- ========================================================================================================
@@ -799,7 +839,7 @@ CREATE TABLE ROOM_INVENTORY (
 -- ========================================================================================================
 
 CREATE TABLE IF NOT EXISTS BUSINESS_HOURS(
-	SESSION_ID INT NOT NULL,
+	SESSION_ID INT NOT NULL AUTO_INCREMENT,
     START_TIME TIME NOT NULL,
     END_TIME TIME NOT NULL,
 	CONSTRAINT BUSINESS_HOURS_SESSION_ID_PK PRIMARY KEY (SESSION_ID)
@@ -834,7 +874,7 @@ CREATE TABLE IF NOT EXISTS RESTAURANT_MENU (
     ITEM_NAME   VARCHAR(50)   NOT NULL,
     ITEM_DESC   VARCHAR(200),
     PRICE       DECIMAL(8, 2) NOT NULL,
-    IMAGE_URL   VARCHAR(255),
+    ITEM_IMAGE   LONGBLOB,
     SORT_ORDER  INT           NOT NULL DEFAULT 0,
     CONSTRAINT RESTAURANT_MENU_ITEM_ID_PK PRIMARY KEY (ITEM_ID),
     CONSTRAINT RESTAURANT_MENU_CATEGORY_ID_FK FOREIGN KEY (CATEGORY_ID) REFERENCES MENU_CATEGORY (CATEGORY_ID)
@@ -892,12 +932,12 @@ INSERT INTO MENU_CATEGORY (CATEGORY_NAME, SORT_ORDER) VALUES
 ('甜點',   4),
 ('飲料',   5);
 
-INSERT INTO RESTAURANT_MENU (CATEGORY_ID, ITEM_NAME, ITEM_DESC, PRICE, IMAGE_URL, SORT_ORDER) VALUES
-(1, '凱薩沙拉',     '新鮮蘿蔓生菜搭配凱薩醬與帕馬森起司',    180.00, '1.jpg',  1),
-(2, '奶油義大利麵', '選用特製奶油醬汁搭配培根與蘑菇',        320.00, '2.jpg',         1),
-(3, '南瓜濃湯',     '香濃南瓜搭配鮮奶油與麵包丁',            150.00, '3.jpg',  1),
-(4, '提拉米蘇',     '經典義式甜點，濃郁咖啡與馬斯卡彭起司',   220.00, '4.jpg',      1),
-(5, '手工檸檬氣泡水','現榨檸檬汁搭配氣泡水與薄荷葉',          120.00, '5.jpg',    1);
+INSERT INTO RESTAURANT_MENU (CATEGORY_ID, ITEM_NAME, ITEM_DESC, PRICE, ITEM_IMAGE, SORT_ORDER) VALUES
+(1, '凱薩沙拉',     '新鮮蘿蔓生菜搭配凱薩醬與帕馬森起司',    180.00, NULL,  1),
+(2, '奶油義大利麵', '選用特製奶油醬汁搭配培根與蘑菇',        320.00, NULL,         1),
+(3, '南瓜濃湯',     '香濃南瓜搭配鮮奶油與麵包丁',            150.00, NULL,  1),
+(4, '提拉米蘇',     '經典義式甜點，濃郁咖啡與馬斯卡彭起司',   220.00, NULL,      1),
+(5, '手工檸檬氣泡水','現榨檸檬汁搭配氣泡水與薄荷葉',          120.00, NULL,    1);
  
 INSERT INTO RESTAURANT_RESERVATION (MEMBER_ID, DATE, SESSION_ID, TABLE_TYPE_ID, RESERVATION_STATUS, REVIEW_STATUS, RESERVATION_REQUEST) VALUES
 (1, '2024-06-01', 1, 1, 'FINISHED',  TRUE,  '素食需求一位'),
